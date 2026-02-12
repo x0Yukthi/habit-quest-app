@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Habit Quest</title>
     <style>
-        /* CSS: Making it look clean and catchy */
         body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; display: flex; justify-content: center; padding-top: 50px; }
         .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 350px; }
         h2 { color: #333; text-align: center; margin-bottom: 20px; }
@@ -30,18 +29,18 @@
     </div>
 
     <script>
-        // JAVASCRIPT: The "Memory" Logic
+        // The "Memory" Logic
         const habitList = document.getElementById("habitList");
         const input = document.getElementById("habitInput");
 
-        // 1. Load habits from memory when the page opens
+        // Load habits from memory when the page opens
         document.addEventListener("DOMContentLoaded", getHabits);
 
         function newElement() {
             if (input.value === '') return;
             
             createHabitItem(input.value);
-            saveLocalHabit(input.value); // Save to memory
+            saveLocalHabit(input.value); 
             input.value = "";
         }
 
