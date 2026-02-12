@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habit Quest</title>
+    <style>
+        /* CSS: Making it look clean and catchy */
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; display: flex; justify-content: center; padding-top: 50px; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 350px; }
+        h2 { color: #333; text-align: center; margin-bottom: 20px; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        input { flex: 1; padding: 10px; border: 2px solid #eee; border-radius: 8px; outline: none; }
+        input:focus { border-color: #007bff; }
+        button#add-btn { background: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; }
+        ul { list-style: none; padding: 0; }
+        li { background: #fafafa; margin-bottom: 8px; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; }
+        .delete-btn { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>⚔️ Habit Quest</h2>
+        <div class="input-group">
+            <input type="text" id="habitInput" placeholder="New quest name...">
+            <button id="add-btn" onclick="newElement()">Add</button>
+        </div>
+        <ul id="habitList"></ul>
+    </div>
+
+    <script>
+        // JAVASCRIPT: The "Memory" Logic
+        const habitList = document.getElementById("habitList");
+        const input = document.getElementById("habitInput");
+
+        // 1. Load habits from memory when the page opens
+        document.addEventListener("DOMContentLoaded", getHabits);
+
+        function newElement() {
+            if (input.value === '') return;
+            
+            createHabitItem(input.value);
+            saveLocalHabit(input.value); // Save to memory
+            input.value = "";
+        }
+
+        function createHabitItem(text) {
+            const li = document.createElement("li");
+            li.innerHTML = `<span>${text}</span> <button class="delete-btn" onclick="removeHabit(this)">Done</button>`;
+            habitList.appendChild(li);
+        }
+
+        function saveLocalHabit(habit) {
+            let habits = localStorage.getItem("habits") ? JSON.parse(localStorage.getItem("habits")) : [];
+            habits.push(habit);
+            localStorage.setItem("habits", JSON.stringify(habits));
+        }
+
+        function getHabits() {
+            let habits = localStorage.getItem("habits") ? JSON.parse(localStorage.getItem("habits")) : [];
+            habits.forEach(habit => createHabitItem(habit));
+        }
+
+        function removeHabit(btn) {
+            const text = btn.parentElement.querySelector('span').innerText;
+            btn.parentElement.remove();
+            let habits = JSON.parse(localStorage.getItem("habits"));
+            habits = habits.filter(h => h !== text);
+            localStorage.setItem("habits", JSON.stringify(habits));
+        }
+    </script>
+</body>
+</html>
