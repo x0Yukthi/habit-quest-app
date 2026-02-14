@@ -3,71 +3,208 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Habit Quest</title>
+    <title>Habit Quest - Quest Board</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; display: flex; justify-content: center; padding-top: 50px; }
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 350px; }
-        h2 { color: #333; text-align: center; margin-bottom: 20px; }
-        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
-        input { flex: 1; padding: 10px; border: 2px solid #eee; border-radius: 8px; outline: none; }
-        input:focus { border-color: #007bff; }
-        button#add-btn { background: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; }
-        ul { list-style: none; padding: 0; }
-        li { background: #fafafa; margin-bottom: 8px; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; }
-        .delete-btn { background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; }
+
+        :root { 
+            --primary: #6366f1; 
+            --success: #22c55e; 
+            --bg: #f8fafc; 
+            --card-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg); 
+            display: flex; 
+            justify-content: center; 
+            padding: 40px 20px; 
+            margin: 0;
+        }
+
+        .container { width: 100%; max-width: 900px; }
+
+        .header-card { 
+            background: white; 
+            padding: 2rem; 
+            border-radius: 24px; 
+            box-shadow: var(--card-shadow); 
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h2 { margin-top: 0; color: #1e293b; }
+
+        .xp-container { 
+            width: 100%; 
+            background: #e2e8f0; 
+            height: 14px; 
+            border-radius: 10px; 
+            overflow: hidden; 
+            margin: 15px 0;
+        }
+        #xp-bar { 
+            width: 0%; 
+            height: 100%; 
+            background: var(--primary); 
+            transition: width 0.5s ease; 
+        }
+
+        .input-group { display: flex; gap: 10px; justify-content: center; }
+        input { 
+            padding: 12px; 
+            border: 2px solid #f1f5f9; 
+            border-radius: 12px; 
+            outline: none; 
+            width: 60%;
+        }
+        button#add-btn { 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-weight: bold; 
+        }
+
+        #habitList { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+            gap: 20px; 
+            padding: 0;
+            list-style: none;
+        }
+
+        li { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 24px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            text-align: center;
+            box-shadow: var(--card-shadow);
+            border: 2px solid transparent;
+            transition: transform 0.2s, border-color 0.3s;
+        }
+        li:hover { transform: translateY(-5px); }
+
+        li.completed { 
+            border-color: var(--success); 
+            background: #f0fdf4; 
+        }
+
+        .habit-name { font-size: 1.2rem; font-weight: bold; color: #334155; margin-bottom: 5px; }
+        .streak { font-size: 0.9rem; color: #64748b; margin-bottom: 15px; }
+
+        .check-btn { 
+            width: 100%;
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 10px; 
+            border-radius: 12px; 
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .completed .check-btn { background: var(--success); }
+        
+        .delete-link {
+            margin-top: 10px;
+            font-size: 0.7rem;
+            color: #94a3b8;
+            cursor: pointer;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h2>⚔️ Habit Quest</h2>
-        <div class="input-group">
-            <input type="text" id="habitInput" placeholder="New quest name...">
-            <button id="add-btn" onclick="newElement()">Add</button>
+    <div class="container">
+        <div class="header-card">
+            <h2>⚔️ Habit Quest</h2>
+            <div class="xp-container"><div id="xp-bar"></div></div>
+            <div class="input-group">
+                <input type="text" id="habitInput" placeholder="Enter a new quest...">
+                <button id="add-btn" onclick="addHabit()">Add</button>
+            </div>
         </div>
+
         <ul id="habitList"></ul>
     </div>
 
     <script>
-        // The "Memory" Logic
-        const habitList = document.getElementById("habitList");
-        const input = document.getElementById("habitInput");
+        
+        let habits = JSON.parse(localStorage.getItem("habits")) || [];
 
-        // Load habits from memory when the page opens
-        document.addEventListener("DOMContentLoaded", getHabits);
+        function render() {
+            const list = document.getElementById("habitList");
+            list.innerHTML = "";
+            let completedCount = 0;
 
-        function newElement() {
-            if (input.value === '') return;
-            
-            createHabitItem(input.value);
-            saveLocalHabit(input.value); 
+            habits.forEach((habit, index) => {
+                
+                if (typeof habit === 'string') {
+                    habit = { text: habit, completed: false, streak: 0 };
+                    habits[index] = habit;
+                }
+
+                if(habit.completed) completedCount++;
+
+                const li = document.createElement("li");
+                li.className = habit.completed ? "completed" : "";
+                li.innerHTML = `
+                    <div class="habit-name">${habit.text}</div>
+                    <div class="streak"> ${habit.streak || 0} Day Streak</div>
+                    <button class="check-btn" onclick="toggleHabit(${index})">
+                        ${habit.completed ? '✓ Completed' : 'Mark Done'}
+                    </button>
+                    <div class="delete-link" onclick="deleteHabit(${index})">Remove Quest</div>
+                `;
+                list.appendChild(li);
+            });
+
+            const progress = habits.length ? (completedCount / habits.length) * 100 : 0;
+            document.getElementById("xp-bar").style.width = progress + "%";
+
+            const title = document.querySelector('h2');
+            if (progress === 100 && habits.length > 0) {
+                title.innerText = "Day Complete!";
+            } else {
+                title.innerText = "Habit Quest";
+            }
+
+            localStorage.setItem("habits", JSON.stringify(habits));
+        }
+
+        function addHabit() {
+            const input = document.getElementById("habitInput");
+            if(!input.value) return;
+            habits.push({ text: input.value, completed: false, streak: 0 });
             input.value = "";
+            render();
         }
 
-        function createHabitItem(text) {
-            const li = document.createElement("li");
-            li.innerHTML = `<span>${text}</span> <button class="delete-btn" onclick="removeHabit(this)">Done</button>`;
-            habitList.appendChild(li);
+        function toggleHabit(index) {
+            habits[index].completed = !habits[index].completed;
+            if(habits[index].completed) {
+                habits[index].streak++;
+            } else {
+                habits[index].streak--;
+            }
+            render();
         }
 
-        function saveLocalHabit(habit) {
-            let habits = localStorage.getItem("habits") ? JSON.parse(localStorage.getItem("habits")) : [];
-            habits.push(habit);
-            localStorage.setItem("habits", JSON.stringify(habits));
+        function deleteHabit(index) {
+            if(confirm("Abandon this quest?")) {
+                habits.splice(index, 1);
+                render();
+            }
         }
 
-        function getHabits() {
-            let habits = localStorage.getItem("habits") ? JSON.parse(localStorage.getItem("habits")) : [];
-            habits.forEach(habit => createHabitItem(habit));
-        }
-
-        function removeHabit(btn) {
-            const text = btn.parentElement.querySelector('span').innerText;
-            btn.parentElement.remove();
-            let habits = JSON.parse(localStorage.getItem("habits"));
-            habits = habits.filter(h => h !== text);
-            localStorage.setItem("habits", JSON.stringify(habits));
-        }
+        render();
     </script>
 </body>
 </html>
