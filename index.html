@@ -138,26 +138,29 @@
     <script>
         
         let habits = JSON.parse(localStorage.getItem("habits")) || [];
+        // Add a public sound effect URL
+        const ding = new Audio('https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3');
 
         function render() {
             const list = document.getElementById("habitList");
             list.innerHTML = "";
             let completedCount = 0;
+            let totalStreaks = 0;
 
             habits.forEach((habit, index) => {
-                
                 if (typeof habit === 'string') {
                     habit = { text: habit, completed: false, streak: 0 };
                     habits[index] = habit;
                 }
 
                 if(habit.completed) completedCount++;
+                totalStreaks += (habit.streak || 0);
 
                 const li = document.createElement("li");
                 li.className = habit.completed ? "completed" : "";
                 li.innerHTML = `
                     <div class="habit-name">${habit.text}</div>
-                    <div class="streak"> ${habit.streak || 0} Day Streak</div>
+                    <div class="streak">🔥 ${habit.streak || 0} Day Streak</div>
                     <button class="check-btn" onclick="toggleHabit(${index})">
                         ${habit.completed ? '✓ Completed' : 'Mark Done'}
                     </button>
@@ -166,17 +169,29 @@
                 list.appendChild(li);
             });
 
+            // Progress Bar
             const progress = habits.length ? (completedCount / habits.length) * 100 : 0;
             document.getElementById("xp-bar").style.width = progress + "%";
-
+            
+            // LEVEL SYSTEM
             const title = document.querySelector('h2');
-            if (progress === 100 && habits.length > 0) {
-                title.innerText = "Day Complete!";
-            } else {
-                title.innerText = "Habit Quest";
-            }
+            if (totalStreaks < 5) title.innerText = "🛡️ Level 1: Villager";
+            else if (totalStreaks < 15) title.innerText = "⚔️ Level 2: Squire";
+            else if (totalStreaks < 30) title.innerText = "🏰 Level 3: Knight";
+            else title.innerText = "👑 Level 100: Legend";
 
             localStorage.setItem("habits", JSON.stringify(habits));
+        }
+
+        function toggleHabit(index) {
+            habits[index].completed = !habits[index].completed;
+            if(habits[index].completed) {
+                habits[index].streak++;
+                ding.play(); // Play sound on completion!
+            } else {
+                habits[index].streak--;
+            }
+            render();
         }
 
         function addHabit() {
@@ -184,16 +199,6 @@
             if(!input.value) return;
             habits.push({ text: input.value, completed: false, streak: 0 });
             input.value = "";
-            render();
-        }
-
-        function toggleHabit(index) {
-            habits[index].completed = !habits[index].completed;
-            if(habits[index].completed) {
-                habits[index].streak++;
-            } else {
-                habits[index].streak--;
-            }
             render();
         }
 
